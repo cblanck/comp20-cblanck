@@ -12,7 +12,6 @@
         update = fixPrecision(date.getMonth()+1) + "/" + fixPrecision(date.getDate()) + 
             "/" + date.getFullYear() + " " + fixPrecision(date.getHours()) + ":" +
                 fixPrecision(date.getMinutes()) + " " + update;
-        console.log(update);
         var updateLog = document.getElementById("status");
         var updateToAdd = document.createElement("p");
         updateToAdd.innerHTML = update;
