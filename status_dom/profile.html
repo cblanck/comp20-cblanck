@@ -11,7 +11,7 @@
         var date = new Date();
         update = fixPrecision(date.getMonth()+1) + "/" + fixPrecision(date.getDate()) + 
             "/" + date.getFullYear() + " " + fixPrecision(date.getHours()) + ":" +
-                fixPrecision(date.getMinutes()) + " " + update;
+                fixPrecision(date.getMinutes()) + " - " + update;
         var updateLog = document.getElementById("status");
         var updateToAdd = document.createElement("p");
         updateToAdd.innerHTML = update;
