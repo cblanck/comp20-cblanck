@@ -11,8 +11,8 @@ function GameState(){
     this.highscore = 0;
     this.level = 1;
     this.time = 100;
-    this.vehicleCoords = new Array(new Coords(0, 0), new Coords(1, 1), new Coords(2, 2), new Coords(3, 3));
-    this.logCoords = new Array(new Coords(0, 0), new Coords(1, 1), new Coords(2, 2), new Coords(3, 3));
+    this.vehicleCoords = new Array(new Coords(60, 325), new Coords(200, 355), new Coords(2, 2), new Coords(3, 3), new Coords(4, 4));
+    this.logCoords = new Array(new Coords(0, 0), new Coords(1, 1), new Coords(50, 170), new Coords(3, 3), new Coords(4, 4));
     this.vehicleSpeeds = new Array(0, 1, 2, 3);
     this.logSpeeds = new Array(0, 1, 2, 3);
 }
@@ -27,7 +27,18 @@ function start_game(){
         drawBackground();
         drawFooter();
         drawFrogger();
+        drawLogs();
+        drawCars();
     }
+}
+
+function drawLogs(){
+    ctx.drawImage(spriteSheet, 7, 165, 178, 22, gameState.logCoords[2].x, gameState.logCoords[2].y, 178, 22);
+}
+
+function drawCars(){
+    ctx.drawImage(spriteSheet, 106, 302, 46, 18, gameState.vehicleCoords[0].x, gameState.vehicleCoords[0].y, 46, 18);
+    ctx.drawImage(spriteSheet, 46, 265, 28, 24, gameState.vehicleCoords[1].x, gameState.vehicleCoords[1].y, 28, 24);
 }
 
 function drawFrogger(){
@@ -37,7 +48,7 @@ function drawFrogger(){
 function drawFooter(){
     drawLives();
     ctx.font = "bold 15pt arial";
-    ctx.fillStyle = "green"
+    ctx.fillStyle = "#00EE00"
     ctx.fillText("Level ", 50, 545);
     drawLevel();
     ctx.font = "bold 10pt arial";
@@ -48,14 +59,14 @@ function drawFooter(){
 
 function drawScore(){
     ctx.font = "bold 10pt arial";
-    ctx.fillStyle = "green";
+    ctx.fillStyle = "#00EE00";
     ctx.fillText(gameState.score, 45, 560);
     ctx.fillText(gameState.highscore, 143, 560);
 }
 
 function drawLevel(){
     ctx.font = "bold 15pt arial";
-    ctx.fillStyle = "green";
+    ctx.fillStyle = "#00EE00";
     ctx.fillText(gameState.level, 107, 545);
 }
 
