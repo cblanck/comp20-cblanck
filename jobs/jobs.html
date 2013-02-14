@@ -15,7 +15,7 @@
             var job = document.createElement('div');
             job.className = "job";
             job.innerHTML="Company: " + jobs[i].company + "<br>Location: " + jobs[i].location + "<br>Position: " + jobs[i].position;
-            list.insertBefore(job, list.firstChild);
+            list.appendChild(job);
         }
     }
 </script>
