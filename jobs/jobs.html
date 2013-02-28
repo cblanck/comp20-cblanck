@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 
 <html>
@@ -29,9 +28,9 @@
           alert("Error creating request object --Ajax not supported?");
         } else {
             request.onreadystatechange = callback;
+            request.onerror = failure;
             request.open("get","http://messagehub.herokuapp.com/lab8.json",true);
             request.send(null);
-            request.onerror = failure;
         }
     }
     function callback(){
