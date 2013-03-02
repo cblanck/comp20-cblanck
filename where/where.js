@@ -1,5 +1,3 @@
-debug1 = null;
-debug2 = null;
 //Please excuse this disgusting string
 horribleString = ["Red,RALEN,ALEWIFE NB,ALEWIFE,17,FALSE,TRUE,Trunk,NB,place-alfcl,,Alewife Station,,42.395428,-71.142483",
                         "Red,RDAVN,DAVIS NB,DAVIS,16,FALSE,FALSE,Trunk,NB,place-davis,,Davis Station,,42.39674,-71.121815",
@@ -23,12 +21,16 @@ horribleString = ["Red,RALEN,ALEWIFE NB,ALEWIFE,17,FALSE,TRUE,Trunk,NB,place-alf
                         "Red,RQUAN,QUINCY ADAMS NB,QUINCY ADAMS,1,TRUE,FALSE,Braintree,NB,place-qamnl,,Quincy Adams Station,,42.233391,-71.007153",
                         "Red,RBRAS,BRAINTREE SB,BRAINTREE,17,FALSE,TRUE,Braintree,SB,place-brntn,,Braintree Station,,42.2078543,-71.0011385"].join("\n");
 
+//Initializes the entirety of the map and all markers within
 function initialize() {
     var mapCanvas = document.getElementById("map_canvas");
     initMap();
     navigator.geolocation.getCurrentPosition(plotMap);
 }
 
+//Given the position of the client, creates a marker at their location,
+//as well as all the markers for each station and the markers for Carmen
+//and Waldo when possible
 function plotMap(position){
 	markers = [];
     var lineCoords = [];
@@ -68,13 +70,15 @@ function plotMap(position){
     google.maps.event.addListener(curLocMarker, 'click', function() {
         var infoWindow = new google.maps.InfoWindow({
             content: "<p>Current Location<br />Closest station is " + closestStation.station[11] + 
-                "<br />" + closestStation.dist + " miles away"
+                "<br />" + closestStation.dist.toFixed(2) + " miles away"
         });
         infoWindow.open(stationMap, curLocMarker);
     });
     createPolyLine(lineCoords);
 }
 
+//Given a list of coordinates in google.maps.LatLng format, produces
+//a red polyline connecting all locations (default map is stationMap)
 function createPolyLine(lineCoords){
     var line = new google.maps.Polyline({
         path: lineCoords,
@@ -85,6 +89,9 @@ function createPolyLine(lineCoords){
     line.setMap(stationMap);
 }
 
+//Given a station in object format and a schedule for all stations, this
+//will create and return a station marker with a listener that opens an
+//info window displaying the station schedule upon clicking
 function makeStationMarker(station, response){
     var image = "walrus.png";
     var stationSchedule = "<table class=\"schedule\" border=\"1\"><tr><th>Trip#</th><th>Direction</th><th>Time Remaining</th></tr>";
@@ -114,6 +121,7 @@ function makeStationMarker(station, response){
     return stationMarker;
 }
 
+//Sets up map before asking for the users location (default center near Tufts)
 function initMap(){
     var mapOptions = {
         center: new google.maps.LatLng(42.405207,-71.119823),
@@ -175,6 +183,7 @@ function makeRequestObject(){
     return request;
 }
 
+//Sets up the AJAX request for the location of Waldo and Carmen
 function getWaldoAndCarmen(){
     var request = makeRequestObject();
     if (request == null) {
@@ -187,6 +196,7 @@ function getWaldoAndCarmen(){
     }
 }
 
+//Upon failure, notifies the client that it could not find either person
 function waldoFailureNotice(){
     var infowindow = new google.maps.InfoWindow({
         content: "Cannot find Waldo or Carmen!",
@@ -195,6 +205,7 @@ function waldoFailureNotice(){
     infowindow.open(stationMap);
 }
 
+//Sets up the AJAX request for retrieving the train schedules
 function getTrainSchedule() {
     var request = makeRequestObject();
     if (request == null) {
@@ -207,6 +218,9 @@ function getTrainSchedule() {
     }
 }
 
+//Upon a successful AJAX request for the location of Waldo and Carmen,
+//this function will parse the response and place markers at where they
+//are located, as well as how far away they are
 function waldoCallback(){
     if (this.readyState === 4 && this.status == 200){
         var str = this.responseText;
@@ -225,10 +239,10 @@ function waldoCallback(){
                 }
                 if(response[i].name == "Waldo"){
                     curImage = waldopic;
-                    waldodist = "Waldo found " + getDist(latLng) + " miles away from you";
+                    waldodist = "Waldo found " + getDist(latLng).toFixed(2) + " miles away from you";
                 } else {
                     curImage = carmenpic;
-                    carmendist = "Carmen found " + getDist(latLng) + " miles away from you";
+                    carmendist = "Carmen found " + getDist(latLng).toFixed(2) + " miles away from you";
                 }
                 var personMarker = 
                     new google.maps.Marker({
@@ -240,24 +254,23 @@ function waldoCallback(){
             }
             var infowindow = new google.maps.InfoWindow({
                 content: waldodist + " and " + carmendist,
-                position: new google.maps.LatLng(42.330124,-71.001205),
+                position: new google.maps.LatLng(42.36032,-71.037941),
                 maxWidth: 200
             });
             infowindow.open(stationMap);
         } catch (error){
-            debug2 = error;
-            console.log(error);
             console.log("Failed to parse JSON string");
         }
     }
 }
 
+//Upon a successful AJAX request for the station schedule, this function
+//will parse the response create a marker for each station
 function stationCallback(){
     if (this.readyState === 4 && this.status == 200){
         var str = this.responseText;
         try{
             var response = JSON.parse(str);
-            debug1 = response;
             for (var i=0; i<stations.length; i++){
                 markers.push(makeStationMarker(stations[i], response));
             }            
