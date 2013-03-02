@@ -33,7 +33,7 @@ function plotMap(position){
 	markers = [];
     var lineCoords = [];
     var closestStation = null;
-    var curLoc = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+    curLoc = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
     var curLocMarker = 
         new google.maps.Marker({
             position: curLoc,
@@ -49,7 +49,7 @@ function plotMap(position){
         latLng.long = stations[i][14];
         lineCoords.push(new google.maps.LatLng(stations[i][13], stations[i][14]));
         if(closestStation != null){
-            var dist = getDist(curLoc, latLng);
+            var dist = getDist(latLng);
             if(dist < closestStation.dist){
                 closestStation = {
                     station: stations[i],
@@ -59,7 +59,7 @@ function plotMap(position){
         } else {
             closestStation = {
                 station: stations[i],
-                dist: getDist(curLoc, latLng)
+                dist: getDist(latLng)
             };
         }
     }
@@ -72,8 +72,6 @@ function plotMap(position){
         });
         infoWindow.open(stationMap, curLocMarker);
     });
-    console.log(closestStation);
-    console.log(lineCoords);
     createPolyLine(lineCoords);
 }
 
@@ -132,10 +130,9 @@ function parseCSV (csv) {
         stationInfo[i] = singleStation;
     }
     return stationInfo;
-    console.log(stationInfo);
 }
 
-function getDist (curLoc, dest){
+function getDist (dest){
     var R = 6371;
     var sLat = dest.lat;
     var sLong = dest.long;
@@ -181,23 +178,28 @@ function makeRequestObject(){
 function getWaldoAndCarmen(){
     var request = makeRequestObject();
     if (request == null) {
-        waldoFailureNotice();
         alert("Error creating request object --Ajax not supported?");
     } else {
-        console.log("got to before onreadystatechange");
         request.onreadystatechange = waldoCallback;
-        request.onerror = requestFailure;
+        request.onerror = waldoFailureNotice;
         request.open("get", "http://messagehub.herokuapp.com/a3.json", true);
         request.send(null);
     }
 }
 
+function waldoFailureNotice(){
+    var infowindow = new google.maps.InfoWindow({
+        content: "Cannot find Waldo or Carmen!",
+        position: new google.maps.LatLng(42.36032,-71.037941)
+    });
+    infowindow.open(stationMap);
+}
+
 function getTrainSchedule() {
     var request = makeRequestObject();
     if (request == null) {
-      alert("Error creating request object --Ajax not supported?");
+        alert("Error creating request object --Ajax not supported?");
     } else {
-        console.log("got to before onreadystatechange");
         request.onreadystatechange = stationCallback;
         request.onerror = requestFailure;
         request.open("get", "http://mbtamap-cedar.herokuapp.com/mapper/redline.json", true);
@@ -210,24 +212,38 @@ function waldoCallback(){
         var str = this.responseText;
         var waldopic = 'waldo.png';
         var carmenpic = 'carmen.png';
+        var waldodist = "Did not find Waldo";
+        var carmendist = "Did not find Carmen";
         try{
             var response = JSON.parse(str);
             debug2 = response;
             for(var i=0; i<response.length; i++){
                 var curImage;
+                var latLng = {
+                    lat: response[i].loc.latitude,
+                    long: response[i].loc.longitude
+                }
                 if(response[i].name == "Waldo"){
-                    curImage=waldopic;
+                    curImage = waldopic;
+                    waldodist = "Waldo found " + getDist(latLng) + " miles away from you";
                 } else {
-                    curImage=carmenpic;
+                    curImage = carmenpic;
+                    carmendist = "Carmen found " + getDist(latLng) + " miles away from you";
                 }
                 var personMarker = 
                     new google.maps.Marker({
                         position: new google.maps.LatLng(response[i].loc.latitude,
                                     response[i].loc.longitude),
                         map: stationMap,
-                        icon: curImage
+                        icon: curImage,
                     });
             }
+            var infowindow = new google.maps.InfoWindow({
+                content: waldodist + " and " + carmendist,
+                position: new google.maps.LatLng(42.330124,-71.001205),
+                maxWidth: 200
+            });
+            infowindow.open(stationMap);
         } catch (error){
             debug2 = error;
             console.log(error);
