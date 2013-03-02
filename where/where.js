@@ -1,4 +1,5 @@
-debug = null;
+debug1 = null;
+debug2 = null;
 //Please excuse this disgusting string
 horribleString = ["Red,RALEN,ALEWIFE NB,ALEWIFE,17,FALSE,TRUE,Trunk,NB,place-alfcl,,Alewife Station,,42.395428,-71.142483",
                         "Red,RDAVN,DAVIS NB,DAVIS,16,FALSE,FALSE,Trunk,NB,place-davis,,Davis Station,,42.39674,-71.121815",
@@ -39,10 +40,16 @@ function plotMap(position){
             map: stationMap,
         });
     stations = parseCSV(horribleString);
+    var latLng = {
+        lat: 0,
+        long: 0
+    };
     for(var i=0; i<stations.length; i++){
+        latLng.lat = stations[i][13];
+        latLng.long = stations[i][14];
         lineCoords.push(new google.maps.LatLng(stations[i][13], stations[i][14]));
         if(closestStation != null){
-            var dist = getDist(curLoc, stations[i]);
+            var dist = getDist(curLoc, latLng);
             if(dist < closestStation.dist){
                 closestStation = {
                     station: stations[i],
@@ -52,11 +59,12 @@ function plotMap(position){
         } else {
             closestStation = {
                 station: stations[i],
-                dist: getDist(curLoc, stations[i])
+                dist: getDist(curLoc, latLng)
             };
         }
     }
     getTrainSchedule();
+    getWaldoAndCarmen();
     google.maps.event.addListener(curLocMarker, 'click', function() {
         var infoWindow = new google.maps.InfoWindow({
             content: "<p>Current Location<br />Closest station is " + closestStation.station[11] + 
@@ -121,10 +129,10 @@ function parseCSV (csv) {
     console.log(stationInfo);
 }
 
-function getDist (curLoc, station){
+function getDist (curLoc, dest){
     var R = 6371;
-    var sLat = station[13];
-    var sLong = station[14];
+    var sLat = dest.lat;
+    var sLong = dest.long;
     var cLat = curLoc.lat();
     var cLong = curLoc.lng();
     var x1 = sLat-cLat;
@@ -143,7 +151,7 @@ function toRad(num) {
     return num * Math.PI / 180;
 };
 
-function getTrainSchedule() {
+function makeRequestObject(){
     var request;
     try {
       request = new XMLHttpRequest();
@@ -161,24 +169,74 @@ function getTrainSchedule() {
         }
       }
     }
+    return request;
+}
+
+function getWaldoAndCarmen(){
+    var request = makeRequestObject();
     if (request == null) {
       alert("Error creating request object --Ajax not supported?");
     } else {
         console.log("got to before onreadystatechange");
-        request.onreadystatechange = callback;
+        request.onreadystatechange = waldoCallback;
+        request.onerror = requestFailure;
+        request.open("get", "http://messagehub.herokuapp.com/a3.json", true);
+        request.send(null);
+    }
+}
+
+function getTrainSchedule() {
+    var request = makeRequestObject();
+    if (request == null) {
+      alert("Error creating request object --Ajax not supported?");
+    } else {
+        console.log("got to before onreadystatechange");
+        request.onreadystatechange = stationCallback;
         request.onerror = requestFailure;
         request.open("get", "http://mbtamap-cedar.herokuapp.com/mapper/redline.json", true);
         request.send(null);
     }
 }
 
-function callback(){
+function waldoCallback(){
+    if (this.readyState === 4 && this.status == 200){
+        var str = this.responseText;
+        var waldopic = 'waldo.png';
+        var carmenpic = 'carmen.png';
+        console.log("got response!");
+        try{
+            var response = JSON.parse(str);
+            debug2 = response;
+            for(var i=0; i<response.length; i++){
+                var curImage;
+                if(response[i].name == "Waldo"){
+                    curImage=waldopic;
+                } else {
+                    curImage=carmenpic;
+                }
+                var personMarker = 
+                    new google.maps.Marker({
+                        position: new google.maps.LatLng(response[i].loc.latitude,
+                                    response[i].loc.longitude),
+                        map: stationMap,
+                        icon: curImage
+                    });
+            }
+        } catch (error){
+            debug2 = error;
+            console.log(error);
+            console.log("Failed to parse JSON string");
+        }
+    }
+}
+
+function stationCallback(){
     if (this.readyState === 4 && this.status == 200){
         var str = this.responseText;
         console.log("got response!");
         try{
             var response = JSON.parse(str);
-            debug = response;
+            debug1 = response;
             for (var i=0; i<stations.length; i++){
                 markers.push(makeStationMarker(stations[i], response));
             }            
