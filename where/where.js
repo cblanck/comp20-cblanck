@@ -6,6 +6,7 @@ function initialize() {
 
 function plotMap(position){
 	markers = [];
+    lineCoords = [];
     var curLocMarker = 
         new google.maps.Marker({
             position: new google.maps.LatLng(position.coords.latitude, position.coords.longitude),
@@ -56,24 +57,32 @@ function plotMap(position){
                         "Red,RBRAS,BRAINTREE SB,BRAINTREE,17,FALSE,TRUE,Braintree,SB,place-brntn,,Braintree Station,,42.2078543,-71.0011385"].join("\n"));
     for(var i=0; i<stations.length; i++){
         markers.push(makeStationMarker(stations[i]));
+        lineCoords.push(new google.maps.LatLng(stations[i][13], stations[i][14]));
     }
+    console.log(lineCoords);
+    var line = new google.maps.Polyline({
+        path: lineCoords,
+        strokeColor: "#FF0000",
+        strokeOpacity: 1.0,
+        strokeWeight: 5
+    });
+    line.setMap(stationMap);
 }
 
 function makeStationMarker(station){
-    console.log("New marker at " + station[13] + "," + station[14] + " named: " + station[11]); 
     var image = "walrus.png";
     var stationMarker = 
         new google.maps.Marker({
             position: new google.maps.LatLng(station[13], station[14]),
             map: stationMap,
-            title: station[11],
             icon: image
         });
     google.maps.event.addListener(stationMarker, 'click', function() {
-        stationMap.setZoom(14);
-        stationMap.setCenter(stationMarker.getPosition());
+        var infoWindow = new google.maps.InfoWindow({
+            content: station[11]
+        });
+        infoWindow.open(stationMap, stationMarker);
     });
-    console.log(stationMarker);
     return stationMarker;
 }
 
