@@ -89,7 +89,7 @@ function createPolyLine(lineCoords){
 
 function makeStationMarker(station, response){
     var image = "walrus.png";
-    var stationSchedule = [];
+    var stationSchedule = "<table class=\"schedule\" border=\"1\"><tr><th>Trip#</th><th>Direction</th><th>Time Remaining</th></tr>";
     var stationMarker = 
         new google.maps.Marker({
             position: new google.maps.LatLng(station[13], station[14]),
@@ -98,7 +98,13 @@ function makeStationMarker(station, response){
         });
     for(var i=0; i<response.length; i++){
         if(response[i].PlatformKey.substr(0,4) == station[1].substr(0,4)){
-            stationSchedule.push("<li>" + response[i].Time + " " + response[i].TimeRemaining + "</li>");
+            var direction;
+            if(response[i].PlatformKey.substr(4,5) == "S"){
+                direction = "Southbound";
+            }else{
+                direction = "Northbound";
+            }
+            stationSchedule += "<tr><td>" + response[i].Trip + "</td><td>" + direction + "</td><td>" + response[i].TimeRemaining + "</td></tr>";
         }
     }
     google.maps.event.addListener(stationMarker, 'click', function() {
@@ -175,7 +181,8 @@ function makeRequestObject(){
 function getWaldoAndCarmen(){
     var request = makeRequestObject();
     if (request == null) {
-      alert("Error creating request object --Ajax not supported?");
+        waldoFailureNotice();
+        alert("Error creating request object --Ajax not supported?");
     } else {
         console.log("got to before onreadystatechange");
         request.onreadystatechange = waldoCallback;
@@ -203,7 +210,6 @@ function waldoCallback(){
         var str = this.responseText;
         var waldopic = 'waldo.png';
         var carmenpic = 'carmen.png';
-        console.log("got response!");
         try{
             var response = JSON.parse(str);
             debug2 = response;
@@ -233,7 +239,6 @@ function waldoCallback(){
 function stationCallback(){
     if (this.readyState === 4 && this.status == 200){
         var str = this.responseText;
-        console.log("got response!");
         try{
             var response = JSON.parse(str);
             debug1 = response;
