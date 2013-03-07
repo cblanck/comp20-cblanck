@@ -4,8 +4,8 @@ function Coords(x, y){
 }
 
 function GameState(){
-    this.coords = new Coords(190, 503);
-    this.lives = 3;
+    this.coords = new Coords(187, 503);
+    this.lives = 5;
     this.gameover = false;
     this.score = 0;
     this.highscore = 0;
@@ -23,13 +23,63 @@ function start_game(){
     gameState = new GameState();
     spriteSheet = new Image();
     spriteSheet.src = "assets/frogger_sprites.png";
+    $(document).keydown(function(e) {
+            if (e.keyCode == 38){ 
+                console.log("up") 
+                goUp();
+            } else if (e.keyCode == 40){
+                console.log("down");
+                goDown();
+            }  else if (e.keyCode == 37){
+                console.log("left");
+                goLeft();
+            }  else if (e.keyCode == 39){
+                console.log("right");
+                goRight();
+            }
+    });
     spriteSheet.onload = function(){
         drawBackground();
         drawFooter();
         drawFrogger();
         drawLogs();
         drawCars();
+        setInterval(gameLoop, 60);
     }
+}
+
+function gameLoop(){
+    if(has_lives()){
+        drawBackground();
+        drawFooter();
+        drawLogs();
+        drawCars();
+        drawFrogger();
+    }
+}
+
+function goUp(){
+    gameState.coords.y -= 30;
+    console.log(gameState.coords);
+}
+
+function goDown(){
+    gameState.coords.y += 30;
+    console.log(gameState.coords);
+}
+
+function goLeft(){
+    gameState.coords.x -= 42;
+    console.log(gameState.coords);
+}
+
+function goRight(){
+    gameState.coords.x += 42;
+    console.log(gameState.coords);
+}
+
+function has_lives(){
+    return (gameState.lives > 0)
 }
 
 function drawLogs(){
@@ -49,7 +99,7 @@ function drawFooter(){
     drawLives();
     ctx.font = "bold 15pt arial";
     ctx.fillStyle = "#00EE00"
-    ctx.fillText("Level ", 50, 545);
+    ctx.fillText("Level ", 70, 545);
     drawLevel();
     ctx.font = "bold 10pt arial";
     ctx.fillText("Score: ", 0, 560);
@@ -67,7 +117,7 @@ function drawScore(){
 function drawLevel(){
     ctx.font = "bold 15pt arial";
     ctx.fillStyle = "#00EE00";
-    ctx.fillText(gameState.level, 107, 545);
+    ctx.fillText(gameState.level, 127, 545);
 }
 
 function drawLives(){
