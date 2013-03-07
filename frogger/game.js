@@ -5,16 +5,77 @@ function Coords(x, y){
 
 function GameState(){
     this.coords = new Coords(187, 503);
+    this.lastDirection = "up";
+    this.onLog = -1;
     this.lives = 5;
     this.gameover = false;
     this.score = 0;
     this.highscore = 0;
     this.level = 1;
     this.time = 100;
-    this.vehicleCoords = new Array(new Coords(60, 325), new Coords(200, 355), new Coords(2, 2), new Coords(3, 3), new Coords(4, 4));
-    this.logCoords = new Array(new Coords(0, 0), new Coords(1, 1), new Coords(50, 170), new Coords(3, 3), new Coords(4, 4));
-    this.vehicleSpeeds = new Array(0, 1, 2, 3);
-    this.logSpeeds = new Array(0, 1, 2, 3);
+    this.vehicles = new Array(generateCar(1), generateCar(2), generateCar(3), generateCar(4), generateCar(5), generateCar(6));
+    this.logs = new Array(generateLog(1), generateLog(2), generateLog(3), generateLog(4), generateLog(5), generateLog(6));
+}
+
+function Log(x, y, type, row, dir, speed){
+    this.coords = new Coords(x, y);
+    this.row = row;
+    this.speed = speed;
+    this.dir = dir;
+    this.type = type;
+    this.width = this.type==1 ? 178 : this.type==2 ? 117 : 85;
+    this.height = 21;
+    this.render = function(){
+        switch(this.type){
+            case 1:
+                ctx.drawImage(spriteSheet, 7, 165, 178, 21, this.coords.x, this.coords.y, 178, 21);
+                break;
+            case 2:
+                ctx.drawImage(spriteSheet, 7, 198, 117, 21, this.coords.x, this.coords.y, 117, 21);
+                break;
+            case 3:
+                ctx.drawImage(spriteSheet, 7, 230, 85, 21, this.coords.x, this.coords.y, 85, 21);
+                break;
+        }
+    }
+    this.update = function(){
+        this.coords.x = this.coords.x - (this.dir * this.speed);
+    }
+    this.offScreen = function(){
+        return ((this.coords.x + this.width) < 0 || (this.coords.x > 399))
+    }
+}
+
+function Car(x, y, type, row, dir, speed){
+    this.coords = new Coords(x, y);
+    this.row = row;
+    this.speed = speed;
+    this.dir = dir;
+    this.type = type;
+    this.width = this.type==1 ? 28 : this.type==2 ? 28 : this.type==3 ? 24 : 46;
+    this.height = this.type==1 ? 19 : this.type==2 ? 24 : this.type==3 ? 26 : 18;
+    this.render = function(){
+        switch(this.type){
+            case 1:
+                ctx.drawImage(spriteSheet, 10, 267, 28, 19, this.coords.x, this.coords.y, 28, 19);
+                break;
+            case 2:
+                ctx.drawImage(spriteSheet, 46, 265, 28, 24, this.coords.x, this.coords.y, 28, 24);
+                break;
+            case 3:
+                ctx.drawImage(spriteSheet, 82, 264, 24, 26, this.coords.x, this.coords.y, 24, 26);
+                break;
+            case 4:
+                ctx.drawImage(spriteSheet, 106, 302, 46, 18, this.coords.x, this.coords.y, 46, 18);
+                break;
+        }
+    }
+    this.update = function(){
+        this.coords.x = this.coords.x - (this.dir * this.speed);
+    }
+    this.offScreen = function(){
+        return ((this.coords.x + this.width) < 0 || (this.coords.x > 399))
+    }
 }
 
 function start_game(){
@@ -25,7 +86,7 @@ function start_game(){
     spriteSheet.src = "assets/frogger_sprites.png";
     $(document).keydown(function(e) {
             if (e.keyCode == 38){ 
-                console.log("up") 
+                console.log("up");
                 goUp();
             } else if (e.keyCode == 40){
                 console.log("down");
@@ -55,50 +116,115 @@ function gameLoop(){
         drawLogs();
         drawCars();
         drawFrogger();
+    }else{
+        failureScreen();
     }
 }
 
 function goUp(){
     gameState.coords.y -= 30;
+    gameState.lastDirection = "up";
     console.log(gameState.coords);
 }
 
 function goDown(){
     gameState.coords.y += 30;
+    gameState.lastDirection = "down";
     console.log(gameState.coords);
 }
 
 function goLeft(){
     gameState.coords.x -= 42;
+    gameState.lastDirection = "left";
     console.log(gameState.coords);
 }
 
 function goRight(){
     gameState.coords.x += 42;
+    gameState.lastDirection = "right";
     console.log(gameState.coords);
 }
 
 function has_lives(){
-    return (gameState.lives > 0)
+    return (gameState.lives > 0);
+}
+
+function generateCar(row){
+    switch (row){
+        case 1:
+            return new Car(20, 40, 4, 1, 1, 1)
+            break;
+        case 2:
+            return new Car(30, 50, 3, 2, 1, 1)
+            break;
+        case 3:
+            return new Car(40, 60, 2, 3, -1, 1)
+            break;
+        case 4:
+            return new Car(50, 70, 1, 4, 1, 1)
+            break;
+        case 5:
+            return new Car(60, 80, 2, 5, -1, 1)
+            break;
+        case 6:
+            return new Car(70, 90, 3, 6, 1, 1)
+            break;
+    }
+}
+
+function generateLog(row){
+    switch (row){
+        case 1:
+            //return new Log(x, y, type, dir, speed)
+            break;
+        case 2:
+            //return new Log(x, y, type, dir, speed)
+            break;
+        case 3:
+            //return new Log(x, y, type, dir, speed)
+            break;
+        case 4:
+            //return new Log(x, y, type, dir, speed)
+            break;
+        case 5:
+            //return new Log(x, y, type, dir, speed)
+            break;
+        case 6:
+            //return new Log(x, y, type, dir, speed)
+            break;
+    }
 }
 
 function drawLogs(){
-    ctx.drawImage(spriteSheet, 7, 165, 178, 22, gameState.logCoords[2].x, gameState.logCoords[2].y, 178, 22);
+    
 }
 
 function drawCars(){
-    ctx.drawImage(spriteSheet, 106, 302, 46, 18, gameState.vehicleCoords[0].x, gameState.vehicleCoords[0].y, 46, 18);
-    ctx.drawImage(spriteSheet, 46, 265, 28, 24, gameState.vehicleCoords[1].x, gameState.vehicleCoords[1].y, 28, 24);
+    for(var i=0; i<gameState.vehicles.length; i++){
+        gameState.vehicles[i].update();
+        if(gameState.vehicles[i].offScreen()){
+            gameState.vehicles[i] = generateCar(gameState.vehicles[i].row);
+        }
+        gameState.vehicles[i].render();
+    }
 }
 
 function drawFrogger(){
-    ctx.drawImage(spriteSheet, 12, 369, 23, 17, gameState.coords.x, gameState.coords.y, 23, 17);
+    if(gameState.lastDirection == "up"){
+        ctx.drawImage(spriteSheet, 12, 369, 23, 17, gameState.coords.x, gameState.coords.y, 23, 17);
+    } else if (gameState.lastDirection == "down"){
+        ctx.drawImage(spriteSheet, 80, 369, 23, 17, gameState.coords.x, gameState.coords.y, 23, 17);
+    } else if (gameState.lastDirection == "left"){
+        ctx.drawImage(spriteSheet, 82, 335, 18, 23, gameState.coords.x, gameState.coords.y-3, 18, 23);
+    } else if (gameState.lastDirection == "right"){
+        ctx.drawImage(spriteSheet, 13, 334, 17, 23, gameState.coords.x, gameState.coords.y-3, 17, 23);
+    } 
 }
 
 function drawFooter(){
     drawLives();
     ctx.font = "bold 15pt arial";
-    ctx.fillStyle = "#00EE00"
+    ctx.fillStyle = "#00EE00";
     ctx.fillText("Level ", 70, 545);
     drawLevel();
     ctx.font = "bold 10pt arial";
