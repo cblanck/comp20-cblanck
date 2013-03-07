@@ -12,7 +12,7 @@ function GameState(){
     this.score = 0;
     this.highscore = 0;
     this.level = 1;
-    this.time = 100;
+    this.time = 800;
     this.vehicles = new Array(generateCar(1, 50), generateCar(2), generateCar(3), generateCar(4), generateCar(5), generateCar(6));
     this.logs = new Array(generateLog(1), generateLog(2), generateLog(3), generateLog(4), generateLog(5), generateLog(6));
     this.hasLives = function (){
@@ -127,6 +127,7 @@ function gameLoop(){
     if(gameState.hasLives()){
         drawBackground();
         drawFooter();
+        drawTime();
         drawLogs();
         drawCars();
         drawFrogger();
@@ -197,31 +198,37 @@ function generateCar(row, x){
     }
 }
 
-function generateLog(row){
+function generateLog(row, x){
     switch (row){
         case 1:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? 390 : x, 115, 1, 1, 2, 1)
             break;
         case 2:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? -30 : x, 145, 2, 2, 2, -1)
             break;
         case 3:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? 390 : x, 173, 3, 3, 2, 1)
             break;
         case 4:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? -30 : x, 200, 1, 4, 2, -1)
             break;
         case 5:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? 390 : x, 228, 3, 5, 2, 1)
             break;
         case 6:
-            //return new Log(x, y, type, dir, speed)
+            return new Log( x==null ? -30 : x, 255, 2, 6, 2, -1)
             break;
     }
 }
 
 function drawLogs(){
-    
+    for(var i=0; i<gameState.logs.length; i++){
+        gameState.logs[i].update();
+        if(gameState.logs[i].offScreen()){
+            gameState.logs[i] = generateLog(gameState.logs[i].row);
+        }
+        gameState.logs[i].render();
+    }
 }
 
 function drawCars(){
@@ -236,7 +243,6 @@ function drawCars(){
 
 function drawFrogger(){
     if (gameState.deathTimer > 0) {
-        console.log("draw dead frogger?");
         ctx.drawImage(spriteSheet, 251, 222, 18, 24, gameState.coords.x, gameState.coords.y, 18, 24);
         gameState.deathTimer--;
     } else if (gameState.deathTimer == 0){
@@ -262,6 +268,16 @@ function drawFrogger(){
 function die(){
     gameState.lives--;
     gameState.deathTimer = 30;
+}
+
+function drawTime(){
+    if(gameState.time == 0){
+        die();
+    } else {
+        ctx.fillStyle = "#00EE00";
+        ctx.fillRect(190, 540, gameState.time/6, 10);
+        gameState.time--;
+    }
 }
 
 function drawFooter(){
