@@ -5,6 +5,8 @@ function Coords(x, y){
 
 function GameState(){
     this.coords = new Coords(187, 503);
+    this.width = 23;
+    this.height = 17;
     this.lastDirection = "up";
     this.deathTimer = -1;
     this.onLog = -1;
@@ -17,6 +19,32 @@ function GameState(){
     this.logs = new Array(generateLog(1), generateLog(2), generateLog(3), generateLog(4), generateLog(5), generateLog(6));
     this.hasLives = function (){
         return (this.lives > 0);
+    };
+    this.carCollides = function (){
+        if(this.coords.y < 505 && this.coords.y > 270){            
+            for(var i=0; i<this.vehicles.length; i++){
+                if(collide(this.coords.x, this.coords.y, this.width, this.height,
+                    this.vehicles[i].coords.x, this.vehicles[i].coords.y, this.vehicles[i].width, this.vehicles[i].height)){
+                    return true;
+                }
+            }
+        }
+        return false;
+    };
+    this.waterCollides = function (){
+        return (this.onLog == -1 && this.coords.y > 105 && this.coords.y < 270);
+    };
+    this.logCollides = function (){
+        if(this.coords.y < 270){
+            for(var i=0; i<this.logs.length; i++){
+                if(collide(this.coords.x, this.coords.y, this.width, this.height,
+                    this.logs[i].coords.x, this.logs[i].coords.y, this.logs[i].width, this.logs[i].height)){
+                    this.onLog = i;
+                    return true;
+                }
+            }
+        }
+        return false;
     };
 }
 
@@ -90,6 +118,12 @@ function start_game(){
     gameState = new GameState();
     spriteSheet = new Image();
     spriteSheet.src = "assets/frogger_sprites.png";
+    $(document).keydown(function(e) {
+        var key = e.which;
+        if(key==38 || key==40 || key==37 || key==39){
+            e.preventDefault();
+        }
+    });
     $(document).keydown(function(e) {
         if (gameState.hasLives() && gameState.deathTimer == -1){
             if (e.keyCode == 38){ 
@@ -249,17 +283,32 @@ function drawFrogger(){
         gameState.coords.x = 187;
         gameState.coords.y = 503;
         gameState.deathTimer = -1;
-    } else if (waterCollide()){
-       console.log("waterCollided");
-       die();
-    } else { 
+    } else if (gameState.waterCollides()){
+        console.log("waterCollided");
+        die();
+    } else if (gameState.carCollides()){
+        console.log("carCollided");
+        die();
+    } else {
+        if(gameState.logCollides()){
+            console.log("logCollided");
+            gameState.coords.x -= gameState.onLog
+        }
         if(gameState.lastDirection == "up"){
+            gameState.width = 23;
+            gameState.height = 17;
             ctx.drawImage(spriteSheet, 12, 369, 23, 17, gameState.coords.x, gameState.coords.y, 23, 17);
         } else if (gameState.lastDirection == "down"){
+            gameState.width = 23;
+            gameState.height = 17;
             ctx.drawImage(spriteSheet, 80, 369, 23, 17, gameState.coords.x, gameState.coords.y, 23, 17);
         } else if (gameState.lastDirection == "left"){
+            gameState.width = 18;
+            gameState.height = 23;
             ctx.drawImage(spriteSheet, 82, 335, 18, 23, gameState.coords.x, gameState.coords.y-3, 18, 23);
         } else if (gameState.lastDirection == "right"){
+            gameState.width = 17;
+            gameState.height = 23;
             ctx.drawImage(spriteSheet, 13, 334, 17, 23, gameState.coords.x, gameState.coords.y-3, 17, 23);
         } 
     }
@@ -324,13 +373,12 @@ function drawBackground(){
 }
 
 function collide (x1, y1, w1, h1, x2, y2, w2, h2){
-    
-}
-
-function waterCollide (){
-    if(gameState.onLog == -1 && gameState.coords.y > 105 && gameState.coords.y < 270){
-        return true;
-    } else {
-        return false;
-    }
+    var topright = new Coords(x1+w1, y1);
+    var bottomright = new Coords(x1+w1, y1+h1);
+    var topleft = new Coords(x1, y1);
+    var bottomleft = new Coords(x1, y1+h1);
+    return (((topright.x <= x2+w2 && topright.x >= x2) && (topright.y <= y2+h2 && topright.y >= y2)) ||
+            ((bottomright.x <= x2+w2 && bottomright.x >= x2) && (bottomright.y <= y2+h2 && bottomright.y >= y2)) ||
+            ((topleft.x <= x2+w2 && topleft.x >= x2) && (topleft.y <= y2+h2 && topleft.y >= y2)) ||
+            ((bottomleft.x <= x2+w2 && bottomleft.x >= x2) && (bottomleft.y <= y2+h2 && bottomleft.y >= y2)))
 }
