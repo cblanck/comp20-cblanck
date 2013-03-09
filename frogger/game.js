@@ -10,9 +10,12 @@ function GameState(){
     this.lastDirection = "up";
     this.deathTimer = -1;
     this.onLog = -1;
-    this.lives = 1;
+    this.lives = 5;
+    this.won = [false, false, false, false, false];
     this.score = 0;
     this.highscore = 0;
+    this.currentRow = 0;
+    this.highestRow = 0;
     this.level = 1;
     this.time = 800;
     this.vehicles = new Array(generateCar(1, 50), generateCar(2), generateCar(3), generateCar(4), generateCar(5), generateCar(6));
@@ -32,7 +35,7 @@ function GameState(){
         return false;
     };
     this.waterCollides = function (){
-        return (this.onLog == -1 && this.coords.y > 105 && this.coords.y < 270);
+        return (this.coords.y > 105 && this.coords.y < 270);
     };
     this.logCollides = function (){
         if(this.coords.y < 270){
@@ -40,11 +43,12 @@ function GameState(){
                 if(collide(this.coords.x, this.coords.y, this.width, this.height,
                     this.logs[i].coords.x, this.logs[i].coords.y, this.logs[i].width, this.logs[i].height)){
                     this.onLog = i;
-                    return true;
+                    return i;
                 }
             }
         }
-        return false;
+        this.onLog = -1;
+        return -1;
     };
 }
 
@@ -186,27 +190,48 @@ function failureScreen(){
 }
 
 function goUp(){
-    gameState.coords.y -= 30;
+    if(validMove(gameState.coords.x, gameState.coords.y - 30)){
+        gameState.coords.y -= 30;
+        gameState.currentRow++;
+    }
+    if(gameState.currentRow > gameState.highestRow){
+        gameState.highestRow++;
+        gameState.score += 10;
+    }
     gameState.lastDirection = "up";
-    console.log(gameState.coords);
 }
 
 function goDown(){
-    gameState.coords.y += 30;
+    if(validMove(gameState.coords.x, gameState.coords.y + 30)){
+        gameState.coords.y += 30;
+        gameState.currentRow--;
+    }
     gameState.lastDirection = "down";
-    console.log(gameState.coords);
 }
 
 function goLeft(){
-    gameState.coords.x -= 42;
+    if(validMove(gameState.coords.x - 30, gameState.coords.y)){
+        gameState.coords.x -= 30;
+    }
     gameState.lastDirection = "left";
-    console.log(gameState.coords);
 }
 
 function goRight(){
-    gameState.coords.x += 42;
+    if(validMove(gameState.coords.x + 30, gameState.coords.y)){
+        gameState.coords.x += 30;
+    }
     gameState.lastDirection = "right";
-    console.log(gameState.coords);
+}
+
+function validMove (x, y){
+    if (y > 90 && y < 510 && x > 0 && x < 369){
+        return true;
+    } else if (y > 60 && y < 100 && ((x > 5 && x < 40 && !gameState.won[0]) || 
+                (x > 92 && x < 128 && !gameState.won[1]) || (x > 178 && x < 214 && !gameState.won[2]) ||
+                (x > 263 && x < 299 && !gameState.won[3]) || (x > 347 && x < 383 && !gameState.won[4]))){
+        return true;
+    }
+    return false;
 }
 
 function generateCar(row, x){
@@ -276,23 +301,30 @@ function drawCars(){
 }
 
 function drawFrogger(){
+    gameState.onLog = gameState.logCollides();
     if (gameState.deathTimer > 0) {
         ctx.drawImage(spriteSheet, 251, 222, 18, 24, gameState.coords.x, gameState.coords.y, 18, 24);
         gameState.deathTimer--;
     } else if (gameState.deathTimer == 0){
+        gameState.currentRow = 0;
+        gameState.highestRow = 0;
         gameState.coords.x = 187;
         gameState.coords.y = 503;
         gameState.deathTimer = -1;
-    } else if (gameState.waterCollides()){
+    } else if (gameState.waterCollides() && gameState.onLog == -1){
         console.log("waterCollided");
         die();
     } else if (gameState.carCollides()){
         console.log("carCollided");
         die();
     } else {
-        if(gameState.logCollides()){
-            console.log("logCollided");
-            gameState.coords.x -= gameState.onLog
+        if(gameState.onLog >= 0){
+            console.log("on a log yo");
+            var tempCoordsx = gameState.coords.x - (gameState.logs[gameState.onLog].dir * gameState.logs[gameState.onLog].speed);
+            var tempCoordsy = gameState.coords.y;
+            if(validMove(tempCoordsx, tempCoordsy)){
+                gameState.coords.x = tempCoordsx;
+            }
         }
         if(gameState.lastDirection == "up"){
             gameState.width = 23;
