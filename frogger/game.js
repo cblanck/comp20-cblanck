@@ -4,12 +4,17 @@ function Coords(x, y){
 }
 
 function GameState(){
+    this.backgroundMusic = document.createElement('audio');
+    this.moveSound = document.createElement('audio');
+    this.deathSound = document.createElement('audio');
     this.coords = new Coords(187, 503);
     this.width = 23;
     this.height = 17;
     this.lastDirection = "up";
+    this.winTimer = -1;
     this.deathTimer = -1;
     this.onLog = -1;
+    this.extraLives = 0;
     this.lives = 5;
     this.won = [false, false, false, false, false];
     this.score = 0;
@@ -17,7 +22,7 @@ function GameState(){
     this.currentRow = 0;
     this.highestRow = 0;
     this.level = 1;
-    this.time = 800;
+    this.time = 600;
     this.vehicles = new Array(generateCar(1, 50), generateCar(2), generateCar(3), generateCar(4), generateCar(5), generateCar(6));
     this.logs = new Array(generateLog(1), generateLog(2), generateLog(3), generateLog(4), generateLog(5), generateLog(6));
     this.hasLives = function (){
@@ -50,6 +55,41 @@ function GameState(){
         this.onLog = -1;
         return -1;
     };
+    this.checkWin = function() {
+        if(this.coords.y > 60 && this.coords.y < 100){
+            if(this.coords.x > 5 && this.coords.x < 40 && !this.won[0]){
+                this.won[0] = true;
+                return true;
+            } else if (this.coords.x > 92 && this.coords.x < 128 && !this.won[1]){
+                this.won[1] = true;
+                return true;
+            } else if (this.coords.x > 178 && this.coords.x < 214 && !this.won[2]){
+                this.won[2] = true;
+                return true;
+            } else if (this.coords.x > 263 && this.coords.x < 299 && !this.won[3]){
+                this.won[3] = true;
+                return true;
+            } else if (this.coords.x > 347 && this.coords.x < 383 && !this.won[4]){
+                this.won[4] = true;
+                return true;
+            }
+        }
+        return false;
+    };
+    this.reset = function (type){
+        this.coords = new Coords(187, 503);
+        this.lastDirection = "up";
+        this.onLog = -1;
+        this.currentRow = 0;
+        this.highestRow = 0;
+        this.deathTimer = -1;
+        this.winTimer = -1;
+        this.time = 600;
+        if(type == "hard"){
+            this.won = [false, false, false, false, false];
+            this.time -= (this.level * 100)
+        }
+    }
 }
 
 function Log(x, y, type, row, dir, speed){
@@ -109,7 +149,7 @@ function Car(x, y, type, row, dir, speed){
         }
     }
     this.update = function(){
-        this.coords.x = this.coords.x - (this.dir * this.speed);
+        this.coords.x = this.coords.x - (this.dir * this.speed * gameState.level);
     }
     this.offScreen = function(){
         return ((this.coords.x + this.width) < 0 || (this.coords.x > 399))
@@ -131,26 +171,23 @@ function start_game(){
     $(document).keydown(function(e) {
         if (gameState.hasLives() && gameState.deathTimer == -1){
             if (e.keyCode == 38){ 
-                console.log("up");
                 goUp();
             } else if (e.keyCode == 40){
-                console.log("down");
                 goDown();
             } else if (e.keyCode == 37){
-                console.log("left");
                 goLeft();
             } else if (e.keyCode == 39){
-                console.log("right");
                 goRight();
             } else if (e.keyCode == 82){
                 gameState = new GameState();
-                console.log("New game!");
             }
         } else if (e.keyCode == 82){
             gameState = new GameState();
-            console.log("New game!");
         }
     });
+    gameState.backgroundMusic.setAttribute('src', 'assets/frogger.mp3');
+    gameState.backgroundMusic.setAttribute('loop', 'true');
+    gameState.backgroundMusic.play();
     spriteSheet.onload = function(){
         drawBackground();
         drawFooter();
@@ -306,20 +343,19 @@ function drawFrogger(){
         ctx.drawImage(spriteSheet, 251, 222, 18, 24, gameState.coords.x, gameState.coords.y, 18, 24);
         gameState.deathTimer--;
     } else if (gameState.deathTimer == 0){
-        gameState.currentRow = 0;
-        gameState.highestRow = 0;
-        gameState.coords.x = 187;
-        gameState.coords.y = 503;
-        gameState.deathTimer = -1;
+        gameState.reset("soft");
+    } else if (gameState.winTimer > 0){
+        gameState.winTimer--;
+    } else if (gameState.winTimer == 0){
+        gameState.reset("soft");
     } else if (gameState.waterCollides() && gameState.onLog == -1){
-        console.log("waterCollided");
         die();
     } else if (gameState.carCollides()){
-        console.log("carCollided");
         die();
+    } else if (gameState.checkWin()){
+        win();
     } else {
         if(gameState.onLog >= 0){
-            console.log("on a log yo");
             var tempCoordsx = gameState.coords.x - (gameState.logs[gameState.onLog].dir * gameState.logs[gameState.onLog].speed);
             var tempCoordsy = gameState.coords.y;
             if(validMove(tempCoordsx, tempCoordsy)){
@@ -351,13 +387,31 @@ function die(){
     gameState.deathTimer = 30;
 }
 
+function win(){
+    gameState.score += 50;
+    gameState.score += Math.round(gameState.time * .06); //.06 seconds per time unit
+    gameState.winTimer = 10;
+    if(gameState.won[0] && gameState.won[1] && gameState.won[2] &&
+            gameState.won[3] && gameState.won[4]){
+        levelUp();
+    }
+}
+
+function levelUp(){
+    gameState.reset("hard");
+    gameState.score += 1000;
+    gameState.level++;
+}
+
 function drawTime(){
-    if(gameState.time == 0){
+    if(gameState.time == 0 && gameState.deathTimer < 0){
         die();
     } else {
         ctx.fillStyle = "#00EE00";
         ctx.fillRect(190, 540, gameState.time/6, 10);
-        gameState.time--;
+        if(gameState.time != 0){
+            gameState.time--;
+        }
     }
 }
 
@@ -369,7 +423,6 @@ function drawFooter(){
     drawLevel();
     ctx.font = "bold 10pt arial";
     ctx.fillText("Score: ", 0, 560);
-    ctx.fillText("Highscore: ", 70, 560);
     drawScore();
 }
 
@@ -377,7 +430,6 @@ function drawScore(){
     ctx.font = "bold 10pt arial";
     ctx.fillStyle = "#00EE00";
     ctx.fillText(gameState.score, 45, 560);
-    ctx.fillText(gameState.highscore, 143, 560);
 }
 
 function drawLevel(){
@@ -389,6 +441,10 @@ function drawLevel(){
 function drawLives(){
     var x = 0;
     var y = 532;
+    if((gameState.score - (gameState.extraLives * 10000)) >= 10000 && gameState.lives <= 4) {
+        gameState.lives++;
+        gameState.extraLives++;
+    }
     for(var i = 0; i<gameState.lives; i++){
         ctx.drawImage(spriteSheet, 13, 334, 17, 23, x, y, 11, 15);
         x += 14;
@@ -401,7 +457,7 @@ function drawBackground(){
     ctx.fillRect(0, 283, 399, 283);
     ctx.drawImage(spriteSheet, 0, 0, 399, 113, 0, 0, 399, 113);
     ctx.drawImage(spriteSheet, 0, 119, 399, 34, 0, 283, 399, 34);
-    ctx.drawImage(spriteSheet, 0, 119, 399, 34, 0, 495, 399, 34);  
+    ctx.drawImage(spriteSheet, 0, 119, 399, 34, 0, 495, 399, 34);
 }
 
 function collide (x1, y1, w1, h1, x2, y2, w2, h2){
