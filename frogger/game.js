@@ -490,7 +490,6 @@ function drawLilyPads(){
     ctx.fillStyle = "green";
     for(var i=0; i<gameState.won.length; i++){
         if(gameState.won[i]){
-            console.log("Lilypad should be at x=" + x + " and y=" + y);
             ctx.fillRect(x, y, 25, 25);
         }
         x+= 84;
