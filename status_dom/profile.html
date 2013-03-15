@@ -6,12 +6,24 @@
 <head>
 <title>Fecesbook</title>
 <script>
+    i = 0;
+    function getMessages(){
+        var updateLog = document.getElementById("status");
+        for (key in localStorage) {
+            var toAdd = document.createElement("p")
+            toAdd.innerHTML = localStorage[key];
+            updateLog.insertBefore(toAdd, updateLog.firstChild)
+            i++;
+        }
+    }
     function updateStatus(){
         var update = document.getElementById("msg").value;
         var date = new Date();
         update = fixPrecision(date.getMonth()+1) + "/" + fixPrecision(date.getDate()) + 
             "/" + date.getFullYear() + " " + fixPrecision(date.getHours()) + ":" +
                 fixPrecision(date.getMinutes()) + " - " + update;
+        localStorage.setItem('message' + i, update);
+        i++;
         var updateLog = document.getElementById("status");
         var updateToAdd = document.createElement("p");
         updateToAdd.innerHTML = update;
@@ -26,7 +38,7 @@
 </script>
 </head>
 
-<body>
+<body onload="getMessages()">
 	<h1>Fecebook</h1>
 	<div id="nav">
 		<ul>
