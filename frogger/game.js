@@ -7,6 +7,7 @@ function GameState(){
     this.backgroundMusic = document.createElement('audio');
     this.moveSound = document.createElement('audio');
     this.deathSound = document.createElement('audio');
+    this.winSound = document.createElement('audio');
     this.coords = new Coords(187, 503);
     this.width = 23;
     this.height = 17;
@@ -86,6 +87,7 @@ function GameState(){
         this.winTimer = -1;
         this.time = 600;
         if(type == "hard"){
+            this.backgroundMusic.play();
             this.won = [false, false, false, false, false];
             this.time -= (this.level * 100)
         }
@@ -186,8 +188,11 @@ function start_game(){
         }
     });
     gameState.backgroundMusic.setAttribute('src', 'assets/frogger.mp3');
-    gameState.backgroundMusic.setAttribute('loop', 'true');
+    gameState.backgroundMusic.volume = .5;
     gameState.backgroundMusic.play();
+    gameState.moveSound.setAttribute('src', 'assets/bloop.mp3');
+    gameState.deathSound.setAttribute('src', 'assets/die.mp3');
+    gameState.winSound.setAttribute('src', 'assets/win.mp3');
     spriteSheet.onload = function(){
         drawBackground();
         drawFooter();
@@ -230,6 +235,7 @@ function goUp(){
     if(validMove(gameState.coords.x, gameState.coords.y - 30)){
         gameState.coords.y -= 30;
         gameState.currentRow++;
+        gameState.moveSound.play();
     }
     if(gameState.currentRow > gameState.highestRow){
         gameState.highestRow++;
@@ -242,6 +248,7 @@ function goDown(){
     if(validMove(gameState.coords.x, gameState.coords.y + 30)){
         gameState.coords.y += 30;
         gameState.currentRow--;
+        gameState.moveSound.play();
     }
     gameState.lastDirection = "down";
 }
@@ -249,6 +256,7 @@ function goDown(){
 function goLeft(){
     if(validMove(gameState.coords.x - 30, gameState.coords.y)){
         gameState.coords.x -= 30;
+        gameState.moveSound.play();
     }
     gameState.lastDirection = "left";
 }
@@ -256,6 +264,7 @@ function goLeft(){
 function goRight(){
     if(validMove(gameState.coords.x + 30, gameState.coords.y)){
         gameState.coords.x += 30;
+        gameState.moveSound.play();
     }
     gameState.lastDirection = "right";
 }
@@ -383,6 +392,7 @@ function drawFrogger(){
 }
 
 function die(){
+    gameState.deathSound.play();
     gameState.lives--;
     gameState.deathTimer = 30;
 }
@@ -398,6 +408,7 @@ function win(){
 }
 
 function levelUp(){
+    gameState.winSound.play();
     gameState.reset("hard");
     gameState.score += 1000;
     gameState.level++;
