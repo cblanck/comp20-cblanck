@@ -24,8 +24,14 @@ function GameState(){
     this.highestRow = 0;
     this.level = 1;
     this.time = 600;
-    this.vehicles = new Array(generateCar(1, 50), generateCar(2), generateCar(3), generateCar(4), generateCar(5), generateCar(6));
-    this.logs = new Array(generateLog(1), generateLog(2), generateLog(3), generateLog(4), generateLog(5), generateLog(6));
+    this.vehicles = new Array(generateCar(1, 50), generateCar(1), generateCar(1, 200),
+                              generateCar(2), generateCar(2, 20), generateCar(2, 250),
+                              generateCar(3), generateCar(3, 200), generateCar(4, 20),
+                              generateCar(4), generateCar(4, 75), generateCar(5),
+                              generateCar(5, 175), generateCar(6), generateCar(6, 125));
+    this.logs = new Array(generateLog(1, 10), generateLog(1, 250), generateLog(2), generateLog(2, 60),
+                          generateLog(3), generateLog(3, 50), generateLog(3, 200), generateLog(4),
+                          generateLog(5), generateLog(5, 30), generateLog(6), generateLog(6, 250));
     this.hasLives = function (){
         return (this.lives > 0);
     };
@@ -116,7 +122,7 @@ function Log(x, y, type, row, dir, speed){
         }
     }
     this.update = function(){
-        this.coords.x = this.coords.x - (this.dir * this.speed);
+        this.coords.x = this.coords.x - (this.dir * this.speed * gameState.level);
     }
     this.offScreen = function(){
         return ((this.coords.x + this.width) < 0 || (this.coords.x > 399))
@@ -182,17 +188,14 @@ function start_game(){
                 goRight();
             } else if (e.keyCode == 82){
                 gameState = new GameState();
+                setSounds();
             }
         } else if (e.keyCode == 82){
             gameState = new GameState();
+            setSounds();
         }
     });
-    gameState.backgroundMusic.setAttribute('src', 'assets/frogger.mp3');
-    gameState.backgroundMusic.volume = .5;
-    gameState.backgroundMusic.play();
-    gameState.moveSound.setAttribute('src', 'assets/bloop.mp3');
-    gameState.deathSound.setAttribute('src', 'assets/die.mp3');
-    gameState.winSound.setAttribute('src', 'assets/win.mp3');
+    setSounds();
     spriteSheet.onload = function(){
         drawBackground();
         drawFooter();
@@ -201,6 +204,15 @@ function start_game(){
         drawCars();
         setInterval(gameLoop, 60);
     }
+}
+
+function setSounds(){
+    gameState.backgroundMusic.setAttribute('src', 'assets/frogger.mp3');
+    gameState.backgroundMusic.volume = .5;
+    gameState.backgroundMusic.play();
+    gameState.moveSound.setAttribute('src', 'assets/bloop.mp3');
+    gameState.deathSound.setAttribute('src', 'assets/die.mp3');
+    gameState.winSound.setAttribute('src', 'assets/win.mp3');
 }
 
 function gameLoop(){
@@ -309,19 +321,19 @@ function generateLog(row, x){
             return new Log( x==null ? 390 : x, 115, 1, 1, 2, 1)
             break;
         case 2:
-            return new Log( x==null ? -30 : x, 145, 2, 2, 2, -1)
+            return new Log( x==null ? -110 : x, 145, 2, 2, 2, -1)
             break;
         case 3:
             return new Log( x==null ? 390 : x, 173, 3, 3, 2, 1)
             break;
         case 4:
-            return new Log( x==null ? -30 : x, 200, 1, 4, 2, -1)
+            return new Log( x==null ? -170 : x, 200, 1, 4, 2, -1)
             break;
         case 5:
             return new Log( x==null ? 390 : x, 228, 3, 5, 2, 1)
             break;
         case 6:
-            return new Log( x==null ? -30 : x, 255, 2, 6, 2, -1)
+            return new Log( x==null ? -110 : x, 255, 2, 6, 2, -1)
             break;
     }
 }
@@ -469,6 +481,20 @@ function drawBackground(){
     ctx.drawImage(spriteSheet, 0, 0, 399, 113, 0, 0, 399, 113);
     ctx.drawImage(spriteSheet, 0, 119, 399, 34, 0, 283, 399, 34);
     ctx.drawImage(spriteSheet, 0, 119, 399, 34, 0, 495, 399, 34);
+    drawLilyPads();
+}
+
+function drawLilyPads(){
+    var x = 16;
+    var y = 80;
+    ctx.fillStyle = "green";
+    for(var i=0; i<gameState.won.length; i++){
+        if(gameState.won[i]){
+            console.log("Lilypad should be at x=" + x + " and y=" + y);
+            ctx.fillRect(x, y, 25, 25);
+        }
+        x+= 84;
+    }
 }
 
 function collide (x1, y1, w1, h1, x2, y2, w2, h2){
