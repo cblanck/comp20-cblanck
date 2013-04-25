@@ -5,32 +5,65 @@
 <head>
 	<title>Security Report</title>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <link rel=stylesheet type="text/css" href="report.css" />
 </head>
 
 <body>
+    <h2 class="title">Security Report for Emily Eng's Scorecenter Application</h2>
     <h1>Introduction</h1>
-    <p>This is the introduction</p>
+    <p>The assignment 5 scorecenter application provides an api for submitting score data
+       into a central database that allows for retrieval of highscores for a given game or user
+       as well as for all scores in the database
+       
+       The scorecenter specifications, however, did not mention security, so there are several 
+       security flaws that can be exploited with little effort. The overview is below.</p>
     
     <h1>Methodology</h1>
-    <p>This is the methodology</p>
+    <p>I had access to all of the code for Emily Eng's scorecenter node.js application
+       so it was easy to find the bugs. I then exploited these bugs by using curl's post
+       requests and a simple browser, Chrome in this case. I already knew of most of the
+       possible bugs due to my own experience creating the scorecenter app, so that
+       simplified the search as well</p>
     
     <h1>Abstract of Findings</h1>
-    <p>This is the abstract</p>
+    <p>The two major problems in this application are the result of two very common issues with web applications: no authentication,
+    and no input sanitization.</p> 
+    
+    <p>The lack of authentication leads to the lack of guarantees that the data you are getting is legitimate.
+    This can be seen in the score submission page, which takes data from any source and automatically puts it into storage. While it
+    may have not been a part of the project specification, I believe it is still an important issue to deal with.</p>
+    
+    <p>The lack of input sanitization part of this problem can be seen in the score submission through the high score page. This page
+       returns the 10 highest scores. However, if someone puts in a score that does not have proper numbers, then the output is confusing
+       to anyone using the page. In addition, none of the fields are required, so submitting an empty required to the submission page
+       leads to an entirely empty entry in the data.</p>
     
     <h1>Issues Found</h1>
         <ul>
-            <li>This is an issue
+            <li>Cross site scripting
                 <ol>
-                    <li>Issue: </li>
+                    <li>Location: /submit.json, /usersearch, /</li>
+                    <li>Severity: High</li>
+                    <li>Description: All data submitted to submit.json is immediately added to the mongo database for later use
+                        this has the result of allowing anyone to submit a post request to submit.json with Javascript nestled
+                        within one of the variables like game_title. Then, upon viewing any page that displays that data from the
+                        database, the script could then execute, allowing someone to send a redirect to another page or completely
+                        mangle the contents of the rest of the data.</li>
+                    <li>Resolution: </li>
+                </ol>
+            </li>
+            <li>No authentication
+                <ol>
+                    <li>Issue: /submit.json</li>
                     <li>Location: </li>
                     <li>Severity: </li>
                     <li>Description: </li>
                     <li>Resolution: </li>
                 </ol>
             </li>
-            <li>This is another issue
+            <li>No input restrictions
                 <ol>
-                    <li>Issue: </li>
+                    <li>Issue: submit.json</li>
                     <li>Location: </li>
                     <li>Severity: </li>
                     <li>Description: </li>
