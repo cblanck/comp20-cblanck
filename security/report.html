@@ -11,11 +11,11 @@
 <body>
     <h2 class="title">Security Report for Emily Eng's Scorecenter Application</h2>
     <h1>Introduction</h1>
-    <p>The assignment 5 scorecenter application provides an api for submitting score data
+    <p>The assignment 5 scorecenter application provides an API for submitting score data
        into a central database that allows for retrieval of highscores for a given game or user
-       as well as for all scores in the database
+       as well as for all scores in the database.</p>
        
-       The scorecenter specifications, however, did not mention security, so there are several 
+    <p>The scorecenter specifications, however, did not mention security, so there are several 
        security flaws that can be exploited with little effort. The overview is below.</p>
     
     <h1>Methodology</h1>
@@ -23,15 +23,15 @@
        so it was easy to find the bugs. I then exploited these bugs by using curl's post
        requests and a simple browser, Chrome in this case. I already knew of most of the
        possible bugs due to my own experience creating the scorecenter app, so that
-       simplified the search as well</p>
+       simplified the search as well.</p>
     
     <h1>Abstract of Findings</h1>
-    <p>The two major problems in this application are the result of two very common issues with web applications: no authentication,
+    <p>The two problems in this application are the result of two very common issues with web applications: no authentication,
     and no input sanitization.</p> 
     
     <p>The lack of authentication leads to the lack of guarantees that the data you are getting is legitimate.
-    This can be seen in the score submission page, which takes data from any source and automatically puts it into storage. While it
-    may have not been a part of the project specification, I believe it is still an important issue to deal with.</p>
+       This can be seen in the score submission page, which takes data from any source and automatically puts it into storage. While it
+       may have not been a part of the project specification, I believe it is still an important issue to deal with.</p>
     
     <p>The lack of input sanitization part of this problem can be seen in the score submission through the high score page. This page
        returns the 10 highest scores. However, if someone puts in a score that does not have proper numbers, then the output is confusing
@@ -40,41 +40,83 @@
     
     <h1>Issues Found</h1>
         <ul>
-            <li>Cross site scripting
-                <ol>
-                    <li>Location: /submit.json, /usersearch, /</li>
-                    <li>Severity: High</li>
-                    <li>Description: All data submitted to submit.json is immediately added to the mongo database for later use
-                        this has the result of allowing anyone to submit a post request to submit.json with Javascript nestled
-                        within one of the variables like game_title. Then, upon viewing any page that displays that data from the
-                        database, the script could then execute, allowing someone to send a redirect to another page or completely
-                        mangle the contents of the rest of the data.</li>
-                    <li>Resolution: </li>
-                </ol>
-            </li>
             <li>No authentication
                 <ol>
-                    <li>Issue: /submit.json</li>
-                    <li>Location: </li>
-                    <li>Severity: </li>
-                    <li>Description: </li>
-                    <li>Resolution: </li>
+                    <li>Location: /submit.json</li><br>
+                    <li>Severity: Medium</li><br>
+                    <li>Description: Any client with the capability to send POST requests can send whatever data they would like to 
+                        the score center API for storage. This not only means that the scores can be trivially faked, it also means that
+                        one could easily fill up the database with bogus POST requests, thus crippling the usage of the scorecenter application.
+                    </li><br>
+                    <li>Resolution: Implement a method of authentication or encryption to make it so that only trusted sources of data
+                        like certain HTML5 games or a known game website can send requests. This could be implemented by simply reading
+                        the HTTP header to see where the request is from, matching it against a list of trusted sites. This is not ideal however,
+                        as it is also easy to manipulate the headers that are sent in an HTTP request. The better option is to
+                        implement authentication with public key encryption, where the data would be encrypted via the trusted sites private key, leading
+                        to ciphertext that can only be decrypted with that site's public key. This method is already used for many transactions
+                        and the Public Key Infrastructure (PKI) is already built just for this sort of thing.
+                    </li>
                 </ol>
-            </li>
+            </li><br>
             <li>No input restrictions
                 <ol>
-                    <li>Issue: submit.json</li>
-                    <li>Location: </li>
-                    <li>Severity: </li>
-                    <li>Description: </li>
-                    <li>Resolution: </li>
+                    <li>Location: submit.json</li><br>
+                    <li>Severity: Low</li><br>
+                    <li>Description: The parameters that are supposed to be required for submitting a game score are not required
+                        to fit any datatype that they should. For instance the score parameter is allowed to be a string rather 
+                        than a number. This could easily lead to confusion from an application pulling data from this application
+                        and makes sorting by the scores essentially meaningless. Additionally, this API allows for the user to say
+                        when the score was created, which leads to not only a lack of authentication but also could lead to confusion
+                        when sorting documents by date created.
+                    </li><br>
+                    <li>Resolution: Firstly, the date_created should be set by the server using the <code>new Date()</code> function.
+                        Secondly, there are multiple ways to force the other parameters to follow a certain format. For instance
+                        to make sure that the score is a number one can use the built-in Javascript function <code>isNan()</code> on the
+                        data being POSTed. Example: 
+                            <pre><code>
+                                var score = request.body.score;
+                                if(isNaN(score)){
+                                    response.send("Invalid POST request");
+                                }
+                            </code></pre>
+                    </li>
+                </ol>
+            </li>
+            <li>No input requirements
+                <ol>
+                    <li>Location: submit.json</li><br>
+                    <li>Severity: Low</li><br>
+                    <li>Description: There are no required fields for the score submission POST request, which means
+                        I can send an empty POST request to /submit.json and an entry will be added to the database
+                        where all the fields (except ID) are null. Here's an example of this issue (as well as the preceding issue):<br>
+                        <img src="pic1.jpg" height="500" alt="This is a problem"/>
+                    </li><br>
+                    <li>Resolution: This problem can be fixed by simply checking that all the fields are set before adding them to the
+                        database and complaining if they are not set. This is the way I would do it:
+                            <pre><code>
+                            if(req.game_title == null || req.username == null || req.score == null){
+                                res.send("Game title, username, and score all required");
+                            }else{
+                                //add to database here
+                            }
+                            </code></pre>
+                    </li>
                 </ol>
             </li>
         </ul>
-
     <h1>Conclusion</h1>
-    <p>This is the conclusion</p>
-	
+    <p>Overall, the security issues in this application are more annoying than dangerous.
+       As there will not be any critical user data stored in the database, any issues
+       cannot pose a serious threat. If the issues with authentication and input restrictions
+       are resolved, I cannot see any other way this application can be improved.</p>
+    
+	<p>It is also important to note that the ability to do cross site scripting is NOT present in this application. Although there is 
+       no input checking at all, this application avoids danger through the intelligent usage of content-types. Modern browsers
+       will not attempt to parse the script tags on a page if the content-type is "text/json" as it is in the pages on this
+       application. Putting everything in this format kind of defeats the purpose of a web application though, making it into 
+       a glorified database server. The distinction to be made then is to decide whether it is more important to have
+       simple security with less human readability or more complex security with a more human readable facade.</p>
+
 </body>
 
 </html>
